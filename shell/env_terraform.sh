@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+# Output JSON result with all internal variables set
+printf '{
+    "MONGODB_ATLAS_PROJECT_ID": "%s",
+    "MONGODB_ATLAS_PUBLIC_IP_ADDRESS": "%s",
+    "CONFLUENT_CLOUD_API_KEY": "%s",
+    "CONFLUENT_CLOUD_API_SECRET": "%s"
+}' "$MONGODB_ATLAS_PROJECT_ID" "$MONGODB_ATLAS_PUBLIC_IP_ADDRESS" "$CONFLUENT_CLOUD_API_KEY" "$CONFLUENT_CLOUD_API_SECRET"
