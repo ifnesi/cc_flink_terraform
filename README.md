@@ -2,7 +2,7 @@
 
 # Overview
 
-This Confluent Cloud setup guide will help you to setup a basic cluster in your Confluent Cloud account.
+This is a demo to try out Flink on Confluent Cloud. It is basically a merge of a non-transactional table `demo-users` with a transactional one `demo-pageviews`, then these tables will get merged and at last a new table is created wth a simple aggregation so it result can be sunk to MongoDB.
 
 ![image](docs/architecture-diagram.png)
 
