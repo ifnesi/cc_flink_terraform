@@ -49,82 +49,115 @@ export MONGODB_ATLAS_PUBLIC_IP_ADDRESS="Enter the CIDR range(s) allowed to acces
    - Database: `cc-demo-cluster`
  - Submit the following SQL queries (one set at a time):
 ```
+--------------------------------------------------------
+-- View demo-pageviews table (from topic with same name)
+--------------------------------------------------------
 describe extended `demo-pageviews`;
 
 select * from `demo-pageviews`;
 
+---------------------------------------------------------------
+-- Create table demo-users (topic with same name to be created)
+---------------------------------------------------------------
 CREATE TABLE `demo-users` (
-    `userid` STRING,
-    `regionid` STRING,
-    `gender` STRING,
-    PRIMARY KEY (`userid`) NOT ENFORCED
+  `userid` STRING,
+  `regionid` STRING,
+  `gender` STRING
+) WITH (
+  'changelog.mode' = 'retract'
 );
 
 describe extended `demo-users`;
 
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_1', 'Region_10', 'MALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_2', 'Region_20', 'FEMALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_3', 'Region_30', 'MALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_4', 'Region_40', 'FEMALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_5', 'Region_50', 'MALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_6', 'Region_60', 'FEMALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_7', 'Region_70', 'MALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_8', 'Region_80', 'FEMALE');
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES ('User_9', 'Region_90', 'MALE');
+----------------------------------------------------------------------
+-- Populate table demo-users (see new messages published in the topic)
+----------------------------------------------------------------------
+INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES
+  ('User_1', 'Region_10', 'MALE'),
+  ('User_2', 'Region_20', 'FEMALE'),
+  ('User_3', 'Region_30', 'MALE'),
+  ('User_4', 'Region_40', 'FEMALE'),
+  ('User_5', 'Region_50', 'MALE'),
+  ('User_6', 'Region_60', 'FEMALE'),
+  ('User_7', 'Region_70', 'MALE'),
+  ('User_8', 'Region_80', 'FEMALE'),
+  ('User_9', 'Region_90', 'OTHER');
 
 select * from `demo-users`;
 
+----------------------------------------------------------------------------
+-- Create table demo-pageviews-enriched (topic with same name to be created)
+----------------------------------------------------------------------------
 CREATE TABLE `demo-pageviews-enriched` (
-    `userid` STRING,
-    `regionid` STRING,
-    `gender` STRING,
-    `pageid` INTEGER,
-    `viewtime` TIMESTAMP(3),
-    WATERMARK FOR `viewtime` AS `viewtime` - INTERVAL '1' MINUTES,
-    PRIMARY KEY (`userid`) NOT ENFORCED
+  `userid` STRING,
+  `regionid` STRING,
+  `gender` STRING,
+  `pageid` INTEGER,
+  `viewtime` TIMESTAMP(3),
+  WATERMARK FOR `viewtime` AS `viewtime` - INTERVAL '1' MINUTES
+) WITH (
+  'changelog.mode' = 'retract'
 );
 
 describe extended `demo-pageviews-enriched`;
 
+---------------------------------------------------------------------------------
+-- Merge tables demo-pageviews (transactional) and demo-users (non-transactional) 
+---------------------------------------------------------------------------------
 INSERT INTO `demo-pageviews-enriched` (`userid`, `regionid`, `gender`, `pageid`, `viewtime`)
 SELECT
-   p.`userid`,
-   u.`regionid`,
-   u.`gender`,
-   CAST(REGEXP_EXTRACT(p.`pageid`, '.*?(\d+)', 1) as INTEGER),
-   p.`$rowtime`
+  p.`userid`,
+  u.`regionid`,
+  u.`gender`,
+  CAST(REGEXP_EXTRACT(p.`pageid`, '.*?(\d+)', 1) as INTEGER),
+  p.`$rowtime`
 FROM
-   `demo-pageviews` as p
+  `demo-pageviews` as p
 LEFT JOIN `demo-users` AS u
 ON
-   p.`userid` = u.`userid`;
+  p.`userid` = u.`userid`;
 
+select * from `demo-pageviews-enriched`;
+
+------------------------------------------------------------------------------
+-- Create table demo-accomplished-females (topic with same name to be created)
+------------------------------------------------------------------------------
 CREATE TABLE `demo-accomplished-females` (
-    `userid` STRING,
-    `regionid` STRING,
-    `gender` STRING,
-    `viewtime` TIMESTAMP(3),
-    `sum_pageid` INTEGER,
-    WATERMARK FOR `viewtime` AS `viewtime` - INTERVAL '1' MINUTES
+  `userid` STRING,
+  `regionid` STRING,
+  `gender` STRING,
+  `viewtime` TIMESTAMP(3),
+  `sum_pageid` INTEGER,
+  WATERMARK FOR `viewtime` AS `viewtime` - INTERVAL '1' MINUTES
+) WITH (
+  'changelog.mode' = 'retract'
 );
 
 describe extended `demo-accomplished-females`;
 
+------------------------------------------------------------------------
+-- Populate table demo-accomplished-females (data aggregation + filters)
+------------------------------------------------------------------------
 INSERT INTO `demo-accomplished-females` (`userid`, `regionid`, `gender`, `viewtime`, `sum_pageid`)
 SELECT
-    `userid`,
-    `regionid`,
-    `gender`,
-    `viewtime`,
-    SUM(`pageid`)
+  `userid`,
+  `regionid`,
+  `gender`,
+  `window_start`,
+  SUM(`pageid`)
 FROM
-    TABLE(
-        TUMBLE(TABLE `demo-pageviews-enriched`, DESCRIPTOR(`viewtime`), INTERVAL '10' MINUTES)
-    )
-GROUP BY `userid`, `regionid`, `gender`, `viewtime`
+  TABLE(
+    TUMBLE(TABLE `demo-pageviews-enriched`, DESCRIPTOR(`viewtime`), INTERVAL '1' MINUTES)
+  )
+GROUP BY `userid`, `regionid`, `gender`, `window_start`
 HAVING
-    SUM(`pageid`) >= 100
-    AND `gender` = 'FEMALE';
+  SUM(`pageid`) >= 500
+  AND `gender` = 'FEMALE';
+
+-------------------------------------------------------------------------------------------------------------------------------------
+-- Query table demo-accomplished-females to see the events flowing through, then continue with the rest of the demo (sink to MongoDB)
+-------------------------------------------------------------------------------------------------------------------------------------
+select * from `demo-accomplished-females`;
 ```
 
 ## Add MongoDB + Sink Connector
