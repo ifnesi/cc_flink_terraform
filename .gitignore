@@ -6,3 +6,4 @@
 *.tfstate
 *.info
 .env
+.status.dat

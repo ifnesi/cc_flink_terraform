@@ -1,3 +1,7 @@
 #!/bin/bash
-mv mongodb.tf.disabled mongodb.tf 2>/dev/null; true
+
+source ./demo_vars
+source $FILE
+
 terraform destroy --auto-approve
+echo 0 > $STATUS
