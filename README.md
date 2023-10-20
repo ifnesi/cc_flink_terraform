@@ -43,11 +43,11 @@ export MONGODB_ATLAS_PUBLIC_IP_ADDRESS="Enter the CIDR range(s) allowed to acces
 - Run command: `./demo_start.sh`
 
 ## Flink Compute Pool
- - Access your Flink Compute Pool `standard_compute_pool-XXXXXXXX`
+ - Access your Flink Compute Pool: `standard_compute_pool-XXXXXXXX`
  - Make sure to select:
    - Catalog: `flink_demo_terraform-XXXXXXXX`
    - Database: `cc-demo-cluster`
- - Submit the following SQL queries (one set at a time):
+ - Submit the following SQL queries (one at a time):
 ```
 --------------------------------------------------------
 -- View demo-pageviews table (from topic with same name)
@@ -138,7 +138,7 @@ describe extended `demo-accomplished-females`;
 ------------------------------------------------------------------------
 -- Populate table demo-accomplished-females (data aggregation + filters)
 ------------------------------------------------------------------------
-INSERT INTO `demo-accomplished-females` (`userid`, `regionid`, `gender`, `viewtime`, `sum_pageid`)
+INSERT INTO `demo-accomplished-females`
 SELECT
   `userid`,
   `regionid`,
@@ -217,12 +217,14 @@ Schema:
  - Resources: All resources
 9. MongoDB Database named `confluent_flink_demo`
 10. Create MongoDB Atlas Sink connector named `confluent-mongodb-sink`
- - A new collection will be created to the MongoDB database named `confluent_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
+ - A new collection will be created to the MongoDB database named `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
  ```
-_id: 63fcedd6f11f041d35ce6f88
-PAGEID: "Page_83"
-REGIONID: "Region_1"
-GENDER: "FEMALE"
+_id: 65326651fca84544107f3ffa
+userid: "User_8"
+regionid: "Region_80"
+gender: "FEMALE"
+viewtime: 2023-10-20T11:22:00.000+00:00
+sum_pageid: 527
  ```
 11. The Terraform code will also create Service Accounts, ACLs and API Keys
 
