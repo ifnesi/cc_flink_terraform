@@ -59,6 +59,7 @@ export MONGODB_ATLAS_PUBLIC_IP_ADDRESS="Enter the CIDR range(s) allowed to acces
 ## Flink Compute Pool
  - Access Confluent Cloud WebUI: https://confluent.cloud/login
  - Access your Environment: `flink_demo_terraform-XXXXXXXX`
+ - Select tab `Flink (preview)`
  - Access your Flink Compute Pool: `standard_compute_pool-XXXXXXXX`
  - Click `Open SQL workspace`
  - Make sure to select:
@@ -276,6 +277,14 @@ HAVING
 
 select * from `demo-possible-fraud`;
 ```
+
+### Running Flink SQL statements
+To view all running Flink SQL statements:
+ - Access your Environment: `flink_demo_terraform-XXXXXXXX`
+ - Select tab `Flink (preview)`
+ - Select tab `Flink statements`
+ - Filter by Status `Running` (see example below)
+![image](docs/running-statements.png)
 
 ## Add MongoDB + Sink Connector
 - Run command: `./demo_mongo.sh`
