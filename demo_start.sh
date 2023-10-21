@@ -13,7 +13,13 @@ if [ ! -f "$FILE" ]; then
 else
     mv mongodb.tf mongodb.tf.disabled 2>/dev/null; true
     source $FILE
+
     terraform init
+
+    # Update timestamp on credit_card AVRO schema
+    UTC_NOW=`date -u +%s000`
+    jq -c . < ./schemas/credit_card.avsc | sed 's/"/\\"/g' | sed "s/9999999999/$UTC_NOW/" > ./schemas/credit_card_timestamp.avsc
+
     terraform plan
     terraform apply --auto-approve
     terraform output -json

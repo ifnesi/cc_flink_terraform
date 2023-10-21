@@ -1,0 +1,85 @@
+{
+    "namespace": "datagen",
+    "name": "credit_card",
+    "type": "record",
+    "fields": [
+        {
+            "name": "timestamp",
+            "type": {
+                "type": "long",
+                "logicalType": "timestamp-millis",
+                "arg.properties": {
+                    "iteration": {
+                        "start": 9999999999,
+                        "step": 100
+                    }
+                }
+            }
+        },
+        {
+            "name": "userid",
+            "type": {
+                "type": "string",
+                "arg.properties": {
+                    "options": [
+                        "User_1",
+                        "User_2",
+                        "User_3",
+                        "User_4",
+                        "User_5",
+                        "User_6",
+                        "User_7",
+                        "User_8",
+                        "User_9"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "amount",
+            "type": {
+                "type": "double",
+                "logicalType": "decimal",
+                "precision": 5,
+                "scale": 2,
+                "arg.properties": {
+                    "range": {
+                        "min": 100.00,
+                        "max": 999.99
+                    }
+                }
+            }
+        },
+        {
+            "name": "transaction_id",
+            "type": {
+                "type": "long",
+                "arg.properties": {
+                    "iteration": {
+                        "start": 1,
+                        "step": 1
+                    }
+                }
+            }
+        },
+        {
+            "name": "credit_card_last_four",
+            "type": {
+                "type": "string",
+                "arg.properties": {
+                    "options": [
+                        "1234",
+                        "2345",
+                        "3456",
+                        "4567",
+                        "5678",
+                        "6789",
+                        "7890",
+                        "8901",
+                        "9012"
+                    ]
+                }
+            }
+        }
+    ]
+}

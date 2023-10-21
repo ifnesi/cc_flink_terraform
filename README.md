@@ -2,14 +2,23 @@
 
 # Overview
 
-This is a demo to try out Flink on Confluent Cloud. It is basically a merge of a non-transactional table `demo-users` with a transactional one `demo-pageviews`, then these tables will get merged and at last a new table is created wth a simple aggregation so it result (table `demo-accomplished-females`) can be sunk to MongoDB.
+This is a demo to try out Flink on Confluent Cloud.
+
+It will create two data products and have then sunk to an Atlas MongoDB:
+ - `demo-possible-fraud`:
+    - merge of a non-transactional table `demo-users` with a transactional one `demo-credit-card`
+    - list all cases where the sum of all transactions within a given timeframe is greater than the average credit card transaction for a given user
+ - `demo-accomplished-females`:
+    - merge of a non-transactional table `demo-users` with a transactional one `demo-pageviews`
+    - list all female readers that has read more than a given number of pages within a given timeframe
 
 ![image](docs/demo-diagram.png)
 
 # Pre-requisites
-- User account on [Confluent Cloud](https://www.confluent.io/confluent-cloud/tryfree/)
-- Local install of Terraform (details below)
+- User account on [Confluent Cloud](https://www.confluent.io/confluent-cloud/tryfree)
 - User account on [Atlas MongoDB](https://account.mongodb.com/account/login)
+- Local install of [Terraform](https://www.terraform.io) (details below)
+- Local install of [jq](https://jqlang.github.io/jq/download) (details below)
 
 # Installation (only need to do that once)
 
@@ -19,6 +28,11 @@ brew tap hashicorp/tap
 brew install hashicorp/tap/terraform
 brew update
 brew upgrade hashicorp/tap/terraform
+```
+
+## Install jq
+```
+brew install jq
 ```
 
 # Provision services for the demo
@@ -43,12 +57,19 @@ export MONGODB_ATLAS_PUBLIC_IP_ADDRESS="Enter the CIDR range(s) allowed to acces
 - Run command: `./demo_start.sh`
 
 ## Flink Compute Pool
+ - Access Confluent Cloud WebUI: https://confluent.cloud/login
+ - Access your Environment: `flink_demo_terraform-XXXXXXXX`
  - Access your Flink Compute Pool: `standard_compute_pool-XXXXXXXX`
+ - Click `Open SQL workspace`
  - Make sure to select:
    - Catalog: `flink_demo_terraform-XXXXXXXX`
    - Database: `cc-demo-cluster`
  - Submit the following SQL queries (one at a time):
 ```
+-- *****************************
+-- Create non-transaction table
+-- ****************************
+
 --------------------------------------------------------
 -- View demo-pageviews table (from topic with same name)
 --------------------------------------------------------
@@ -61,8 +82,10 @@ select * from `demo-pageviews`;
 ---------------------------------------------------------------
 CREATE TABLE `demo-users` (
   `userid` STRING,
+  `full_name` STRING,
   `regionid` STRING,
-  `gender` STRING
+  `gender` STRING,
+  `avg_credit_spend` DOUBLE
 ) WITH (
   'changelog.mode' = 'retract'
 );
@@ -72,24 +95,29 @@ describe extended `demo-users`;
 ----------------------------------------------------------------------
 -- Populate table demo-users (see new messages published in the topic)
 ----------------------------------------------------------------------
-INSERT INTO `demo-users` (`userid`, `regionid`, `gender`) VALUES
-  ('User_1', 'Region_10', 'MALE'),
-  ('User_2', 'Region_20', 'FEMALE'),
-  ('User_3', 'Region_30', 'MALE'),
-  ('User_4', 'Region_40', 'FEMALE'),
-  ('User_5', 'Region_50', 'MALE'),
-  ('User_6', 'Region_60', 'FEMALE'),
-  ('User_7', 'Region_70', 'MALE'),
-  ('User_8', 'Region_80', 'FEMALE'),
-  ('User_9', 'Region_90', 'OTHER');
+INSERT INTO `demo-users` (`userid`, `full_name`, `regionid`, `gender`,  `avg_credit_spend`) VALUES
+  ('User_1', 'Blake Lambert', 'Region_10', 'MALE', 8650.0),
+  ('User_2', 'Olivia Anderson', 'Region_20', 'FEMALE', 7721.0),
+  ('User_3', 'Evan Hughes', 'Region_30', 'MALE', 9822.0),
+  ('User_4', 'Sonia Marshall', 'Region_40', 'FEMALE', 7629.0),
+  ('User_5', 'Benjamin Stewart', 'Region_50', 'MALE', 8455.0),
+  ('User_6', 'Caroline Coleman', 'Region_60', 'FEMALE', 8999.0),
+  ('User_7', 'Oliver Chapman', 'Region_70', 'MALE', 10233.0),
+  ('User_8', 'Rose Skinner', 'Region_80', 'FEMALE', 9611.0),
+  ('User_9', 'Bernadette Cameron', 'Region_90', 'OTHER', 9623.0);
 
 select * from `demo-users`;
+
+-- ******************************************
+-- Data Product #1: demo-accomplished-females
+-- ******************************************
 
 ----------------------------------------------------------------------------
 -- Create table demo-pageviews-enriched (topic with same name to be created)
 ----------------------------------------------------------------------------
 CREATE TABLE `demo-pageviews-enriched` (
   `userid` STRING,
+  `full_name` STRING,
   `regionid` STRING,
   `gender` STRING,
   `pageid` INTEGER,
@@ -104,9 +132,10 @@ describe extended `demo-pageviews-enriched`;
 ---------------------------------------------------------------------------------
 -- Merge tables demo-pageviews (transactional) and demo-users (non-transactional) 
 ---------------------------------------------------------------------------------
-INSERT INTO `demo-pageviews-enriched` (`userid`, `regionid`, `gender`, `pageid`, `viewtime`)
+INSERT INTO `demo-pageviews-enriched` (`userid`, `full_name`, `regionid`, `gender`, `pageid`, `viewtime`)
 SELECT
   p.`userid`,
+  u.`full_name`,
   u.`regionid`,
   u.`gender`,
   CAST(REGEXP_EXTRACT(p.`pageid`, '.*?(\d+)', 1) as INTEGER),
@@ -124,6 +153,7 @@ select * from `demo-pageviews-enriched`;
 ------------------------------------------------------------------------------
 CREATE TABLE `demo-accomplished-females` (
   `userid` STRING,
+  `full_name` STRING,
   `regionid` STRING,
   `gender` STRING,
   `viewtime` TIMESTAMP(3),
@@ -141,6 +171,7 @@ describe extended `demo-accomplished-females`;
 INSERT INTO `demo-accomplished-females`
 SELECT
   `userid`,
+  `full_name`,
   `regionid`,
   `gender`,
   `window_start`,
@@ -149,7 +180,7 @@ FROM
   TABLE(
     TUMBLE(TABLE `demo-pageviews-enriched`, DESCRIPTOR(`viewtime`), INTERVAL '1' MINUTES)
   )
-GROUP BY `userid`, `regionid`, `gender`, `window_start`
+GROUP BY `userid`, `full_name`, `regionid`, `gender`, `window_start`
 HAVING
   SUM(`pageid`) >= 500
   AND `gender` = 'FEMALE';
@@ -158,6 +189,92 @@ HAVING
 -- Query table demo-accomplished-females to see the events flowing through, then continue with the rest of the demo (sink to MongoDB)
 -------------------------------------------------------------------------------------------------------------------------------------
 select * from `demo-accomplished-females`;
+
+-- ************************************
+-- Data Product #2: demo-possible-fraud
+-- ************************************
+
+----------------------------------------------------------------------------
+-- Create table demo-credit-card-enriched (topic with same name to be created)
+----------------------------------------------------------------------------
+CREATE TABLE `demo-credit-card-enriched` (
+  `userid` STRING,
+  `full_name` STRING,
+  `regionid` STRING,
+  `gender` STRING,
+  `amount` DOUBLE,
+  `avg_credit_spend` DOUBLE,
+  `transaction_id` BIGINT,
+  `credit_card_last_four` STRING,
+  `timestamp` TIMESTAMP(3),
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' MINUTES
+) WITH (
+  'changelog.mode' = 'retract'
+);
+
+describe extended `demo-credit-card-enriched`;
+
+----------------------------------------------------------------------------------
+-- Merge tables demo-credit-card (transactional) and demo-users (non-transactional) 
+----------------------------------------------------------------------------------
+INSERT INTO `demo-credit-card-enriched` (`userid`, `full_name`, `regionid`, `gender`, `amount`, `avg_credit_spend`, `transaction_id`, `credit_card_last_four`, `timestamp`)
+SELECT
+  c.`userid`,
+  u.`full_name`,
+  u.`regionid`,
+  u.`gender`,
+  c.`amount`,
+  u.`avg_credit_spend`,
+  c.`transaction_id`,
+  c.`credit_card_last_four`,
+  c.`timestamp`
+FROM
+  `demo-credit-card` as c
+LEFT JOIN `demo-users` AS u
+ON
+  c.`userid` = u.`userid`;
+
+select * from `demo-credit-card-enriched`;
+
+------------------------------------------------------------------------
+-- Create table demo-possible-fraud (topic with same name to be created)
+------------------------------------------------------------------------
+CREATE TABLE `demo-possible-fraud` (
+  `userid` STRING,
+  `full_name` STRING,
+  `regionid` STRING,
+  `gender` STRING,
+  `timestamp` TIMESTAMP(3),
+  `sum_amount` DOUBLE,
+  `max_avg_credit_spend` DOUBLE,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' MINUTES
+) WITH (
+  'changelog.mode' = 'retract'
+);
+
+describe extended `demo-possible-fraud`;
+
+-------------------------------------------------------------------------------------------------
+-- Populate table demo-possible-fraud (If sum of amount if greater than average credit card spend)
+-------------------------------------------------------------------------------------------------
+INSERT INTO `demo-possible-fraud`
+SELECT
+  `userid`,
+  `full_name`,
+  `regionid`,
+  `gender`,
+  `window_start`,
+   SUM(`amount`),
+   MAX(`avg_credit_spend`)
+FROM
+  TABLE(
+    TUMBLE(TABLE `demo-credit-card-enriched`, DESCRIPTOR(`timestamp`), INTERVAL '30' SECONDS)
+  )
+GROUP BY `userid`, `full_name`, `regionid`, `gender`, `window_start`
+HAVING
+  SUM(`amount`) > MAX(`avg_credit_spend`);
+
+select * from `demo-possible-fraud`;
 ```
 
 ## Add MongoDB + Sink Connector
@@ -171,7 +288,7 @@ select * from `demo-accomplished-females`;
 2. Create Schema Registry on AWS us-east-2
 3. Create Basic/single-zone Kafka cluster on AWS us-east-1 named `cc-demo-cluster`
 4. Create Flink Compute Pool `standard_compute_pool-XXXXXXXX`
-5. Create DataGen source connector:
+5. Create DataGen source connectors:
 - `DSC_pageviews` sourcing data to the topic `demo-pageviews`, example:
 ```
 {
@@ -202,6 +319,52 @@ Schema:
   "type": "record"
 }
 ```
+- `DSC_credit_card` sourcing data to the topic `demo-credit-card`, example:
+```
+{
+  "timestamp": 1697881233780,
+  "userid": "User_7",
+  "amount": 386.90416643284493,
+  "transaction_id": 6079,
+  "credit_card_last_four": "8901"
+}
+```
+Schema:
+```
+{
+  "connect.name": "datagen.credit_card",
+  "fields": [
+    {
+      "name": "timestamp",
+      "type": {
+        "connect.name": "org.apache.kafka.connect.data.Timestamp",
+        "connect.version": 1,
+        "logicalType": "timestamp-millis",
+        "type": "long"
+      }
+    },
+    {
+      "name": "userid",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "double"
+    },
+    {
+      "name": "transaction_id",
+      "type": "long"
+    },
+    {
+      "name": "credit_card_last_four",
+      "type": "string"
+    }
+  ],
+  "name": "credit_card",
+  "namespace": "datagen",
+  "type": "record"
+}
+```
 6. Create MongoDB `M0` (free tier) cluster on AWS us-east-1 named `terraformFlinkDemo` (IMPORTANT: Only one free-tier cluster is allowed per Atlas account)
 7. Add entry to the Network Access tab (Atlas):
  - IP Address: 0.0.0.0/0 (or as set on env variable MONGODB_ATLAS_PUBLIC_IP_ADDRESS)
@@ -217,15 +380,27 @@ Schema:
  - Resources: All resources
 9. MongoDB Database named `confluent_flink_demo`
 10. Create MongoDB Atlas Sink connector named `confluent-mongodb-sink`
- - A new collection will be created to the MongoDB database named `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
- ```
+ - Two new collections will be created to the MongoDB database:
+   - `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
+```
 _id: 65326651fca84544107f3ffa
 userid: "User_8"
 regionid: "Region_80"
 gender: "FEMALE"
 viewtime: 2023-10-20T11:22:00.000+00:00
 sum_pageid: 527
- ```
+```
+   - `confluent_flink_demo.demo-possible-fraud`, see example of document below (from topic `demo-possible-fraud`)
+```
+_id: 6533a6a8a0bad77e82c5a54e
+userid: "User_3"
+full_name: "Evan Hughes"
+regionid: "Region_30"
+gender: "MALE"
+timestamp: 2023-10-21T09:39:30.000+00:00
+sum_amount: 5650.388958945722
+max_avg_credit_spend: 3675
+```
 11. The Terraform code will also create Service Accounts, ACLs and API Keys
 
 # Terraform files

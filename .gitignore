@@ -7,3 +7,4 @@
 *.info
 .env
 .status.dat
+schemas/credit_card_timestamp.avsc

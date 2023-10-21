@@ -77,11 +77,10 @@ resource "confluent_connector" "mongo_db_sink" {
     "connection.user"          = var.username_mongodb
     "connection.host"          = split("//", mongodbatlas_cluster.cluster-demo.srv_address)[1]
     "input.data.format"        = "AVRO"
-    "topics"                   = "demo-accomplished-females"
+    "topics"                   = "demo-accomplished-females,demo-possible-fraud"
     "max.num.retries"          = "3"
     "retries.defer.timeout"    = "5000"
     "max.batch.size"           = "0"
-    "collection"               = "accomplished_female_readers"
     "tasks.max"                = "1"
   }
   lifecycle {
