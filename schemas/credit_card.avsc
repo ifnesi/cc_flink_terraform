@@ -11,7 +11,7 @@
                 "arg.properties": {
                     "iteration": {
                         "start": 9999999999,
-                        "step": 100
+                        "step": 500
                     }
                 }
             }

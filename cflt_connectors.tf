@@ -264,6 +264,7 @@ resource "confluent_connector" "datagen_pageviews" {
     "output.data.format"       = "AVRO"
     "quickstart"               = "PAGEVIEWS"
     "tasks.max"                = "1"
+    "max.interval"             = "500"
   }
   depends_on = [
     confluent_kafka_acl.connectors_source_create_topic_demo,
@@ -302,6 +303,7 @@ resource "confluent_connector" "datagen_credit_card" {
     "schema.string"            = data.external.env_vars.result.CREDIT_CARD_SCHEMA
     "schema.keyfield"          = "userid"
     "tasks.max"                = "1"
+    "max.interval"             = "500"
   }
   depends_on = [
     confluent_kafka_acl.connectors_source_create_topic_demo,
