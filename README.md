@@ -96,15 +96,15 @@ describe extended `demo-users`;
 -- Populate table demo-users (see new messages published in the topic)
 ----------------------------------------------------------------------
 INSERT INTO `demo-users` (`userid`, `full_name`, `regionid`, `gender`,  `avg_credit_spend`) VALUES
-  ('User_1', 'Blake Lambert', 'Region_10', 'MALE', 8650.0),
-  ('User_2', 'Olivia Anderson', 'Region_20', 'FEMALE', 7721.0),
-  ('User_3', 'Evan Hughes', 'Region_30', 'MALE', 9822.0),
-  ('User_4', 'Sonia Marshall', 'Region_40', 'FEMALE', 7629.0),
-  ('User_5', 'Benjamin Stewart', 'Region_50', 'MALE', 8455.0),
-  ('User_6', 'Caroline Coleman', 'Region_60', 'FEMALE', 8999.0),
-  ('User_7', 'Oliver Chapman', 'Region_70', 'MALE', 10233.0),
-  ('User_8', 'Rose Skinner', 'Region_80', 'FEMALE', 9611.0),
-  ('User_9', 'Bernadette Cameron', 'Region_90', 'OTHER', 9623.0);
+  ('User_1', 'Blake Lambert', 'Region_10', 'MALE', 2650.0),
+  ('User_2', 'Olivia Anderson', 'Region_20', 'FEMALE', 5721.0),
+  ('User_3', 'Evan Hughes', 'Region_30', 'MALE', 4822.0),
+  ('User_4', 'Sonia Marshall', 'Region_40', 'FEMALE', 2629.0),
+  ('User_5', 'Benjamin Stewart', 'Region_50', 'MALE', 1455.0),
+  ('User_6', 'Caroline Coleman', 'Region_60', 'FEMALE', 3999.0),
+  ('User_7', 'Oliver Chapman', 'Region_70', 'MALE', 40233.0),
+  ('User_8', 'Rose Skinner', 'Region_80', 'FEMALE', 4611.0),
+  ('User_9', 'Bernadette Cameron', 'Region_90', 'OTHER', 5623.0);
 
 select * from `demo-users`;
 
@@ -380,9 +380,9 @@ Schema:
 9. MongoDB Database named `confluent_flink_demo`
 10. Create MongoDB Atlas Sink connector named `confluent-mongodb-sink`
 
-Two new collections will be created to the MongoDB database:
+&emsp;Two new collections will be created to the MongoDB database:
 
-a) `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
+&emsp;&emsp;a) `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
 ```
 _id: 65326651fca84544107f3ffa
 userid: "User_8"
@@ -391,7 +391,7 @@ gender: "FEMALE"
 viewtime: 2023-10-20T11:22:00.000+00:00
 sum_pageid: 527
 ```
-b) `confluent_flink_demo.demo-possible-fraud`, see example of document below (from topic `demo-possible-fraud`)
+&emsp;&emsp;b) `confluent_flink_demo.demo-possible-fraud`, see example of document below (from topic `demo-possible-fraud`)
 ```
 _id: 6533a6a8a0bad77e82c5a54e
 userid: "User_3"
