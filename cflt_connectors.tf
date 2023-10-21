@@ -257,7 +257,7 @@ resource "confluent_connector" "datagen_pageviews" {
   config_sensitive = {}
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
-    "name"                     = "DSC_pageviews"
+    "name"                     = "DSoC_pageviews"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
     "kafka.topic"              = confluent_kafka_topic.pageviews.topic_name
@@ -295,7 +295,7 @@ resource "confluent_connector" "datagen_credit_card" {
   config_sensitive = {}
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
-    "name"                     = "DSC_credit_card"
+    "name"                     = "DSoC_credit_card"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
     "kafka.topic"              = confluent_kafka_topic.credit_card.topic_name

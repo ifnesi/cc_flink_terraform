@@ -298,7 +298,7 @@ To view all running Flink SQL statements:
 3. Create Basic/single-zone Kafka cluster on AWS us-east-1 named `cc-demo-cluster`
 4. Create Flink Compute Pool `standard_compute_pool-XXXXXXXX`
 5. Create DataGen source connectors:
-- `DSC_pageviews` sourcing data to the topic `demo-pageviews`, example:
+- `DSoC_pageviews` sourcing data to the topic `demo-pageviews`, example:
 ```
 {
   "viewtime": 1341,
@@ -328,7 +328,7 @@ Schema:
   "type": "record"
 }
 ```
-- `DSC_credit_card` sourcing data to the topic `demo-credit-card`, example:
+- `DSoC_credit_card` sourcing data to the topic `demo-credit-card`, example:
 ```
 {
   "timestamp": 1697881233780,
@@ -387,7 +387,7 @@ Schema:
    - dbAdmin@confluent_demo
  - Resources: All resources
 9. MongoDB Database named `confluent_flink_demo`
-10. Create MongoDB Atlas Sink connector named `confluent-mongodb-sink`
+10. Create MongoDB Atlas Sink connector named `MSiC_mongodb`
 
 &emsp;Two new collections will be created to the MongoDB database:
 

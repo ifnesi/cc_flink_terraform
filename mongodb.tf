@@ -69,7 +69,7 @@ resource "confluent_connector" "mongo_db_sink" {
   }
   config_nonsensitive = {
     "connector.class"          = "MongoDbAtlasSink"
-    "name"                     = "confluent-mongodb-sink"
+    "name"                     = "MSiC_mongodb"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
     "write.strategy"           = "DefaultWriteModelStrategy",
