@@ -380,7 +380,7 @@ Schema:
 9. MongoDB Database named `confluent_flink_demo`
 10. Create MongoDB Atlas Sink connector named `confluent-mongodb-sink`
  - Two new collections will be created to the MongoDB database:
-   - `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
+ - `confluent_flink_demo.accomplished_female_readers`, see example of document below (from topic `demo-accomplished-females`)
 ```
 _id: 65326651fca84544107f3ffa
 userid: "User_8"
@@ -389,7 +389,7 @@ gender: "FEMALE"
 viewtime: 2023-10-20T11:22:00.000+00:00
 sum_pageid: 527
 ```
-   - `confluent_flink_demo.demo-possible-fraud`, see example of document below (from topic `demo-possible-fraud`)
+ - `confluent_flink_demo.demo-possible-fraud`, see example of document below (from topic `demo-possible-fraud`)
 ```
 _id: 6533a6a8a0bad77e82c5a54e
 userid: "User_3"
