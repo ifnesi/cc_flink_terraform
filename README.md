@@ -328,9 +328,8 @@ Schema:
   "transaction_id": 6079,
   "credit_card_last_four": "8901"
 }
-```
+
 Schema:
-```
 {
   "connect.name": "datagen.credit_card",
   "fields": [
