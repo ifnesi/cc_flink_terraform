@@ -57,6 +57,7 @@ export MONGODB_ATLAS_PUBLIC_IP_ADDRESS="Enter the CIDR range(s) allowed to acces
 - Run command: `./demo_start.sh`
 
 ## Flink Compute Pool
+Manual creation for now via WebUI (via Terraform is still WIP):
  - Access Confluent Cloud WebUI: https://confluent.cloud/login
  - Access your Environment: `flink_demo_terraform-XXXXXXXX`
  - Select tab `Flink (preview)`
